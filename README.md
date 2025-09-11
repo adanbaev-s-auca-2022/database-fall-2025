@@ -1,1 +1,3 @@
-Database labs, that we are required to do, starting from #3
+Database labs, that we are required to do, starting from #3 
+
+//Sultanbek Adanbaev
