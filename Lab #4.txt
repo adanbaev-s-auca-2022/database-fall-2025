@@ -1,0 +1,127 @@
+// First SQL Query
+
+
+// Create students table, and insert some test data there
+database_labs=# CREATE TABLE students (
+database_labs(#     student_id SERIAL PRIMARY KEY,
+database_labs(#     name       VARCHAR(100) NOT NULL,
+database_labs(#     email      TEXT UNIQUE,
+database_labs(#     faculty    TEXT
+database_labs(# );
+CREATE TABLE
+database_labs=# \d students
+                                          Table "public.students"
+   Column   |          Type          | Collation | Nullable |                   Default
+------------+------------------------+-----------+----------+----------------------------------------------
+ student_id | integer                |           | not null | nextval('students_student_id_seq'::regclass)
+ name       | character varying(100) |           | not null |
+ email      | text                   |           |          |
+ faculty    | text                   |           |          |
+Indexes:
+    "students_pkey" PRIMARY KEY, btree (student_id)
+    "students_email_key" UNIQUE CONSTRAINT, btree (email)
+
+
+database_labs=# \dt
+          List of relations
+ Schema |   Name   | Type  |  Owner
+--------+----------+-------+----------
+ public | students | table | postgres
+(1 row)
+
+
+database_labs=# INSERT INTO students (name, email, faculty) VALUES
+database_labs-#     ('Alymbek', 'alymbek@example.com', 'Engineering'),
+database_labs-#     ('Timur',   'timur@example.com',   'Engineering'),
+database_labs-#     ('Beka',    'beka@example.com',    'Mathematics'),
+database_labs-#     ('Aida',    'aida@example.com',    'Medicine'),
+database_labs-#     ('Nurai',   'nurai@example.com',   'Mathematics');
+INSERT 0 5
+
+// Try all the commands from the lab
+database_labs=# SELECT * FROM students;
+ student_id |  name   |        email        |   faculty
+------------+---------+---------------------+-------------
+          1 | Alymbek | alymbek@example.com | Engineering
+          2 | Timur   | timur@example.com   | Engineering
+          3 | Beka    | beka@example.com    | Mathematics
+          4 | Aida    | aida@example.com    | Medicine
+          5 | Nurai   | nurai@example.com   | Mathematics
+(5 rows)
+
+
+database_labs=# SELECT name, email FROM students;
+  name   |        email
+---------+---------------------
+ Alymbek | alymbek@example.com
+ Timur   | timur@example.com
+ Beka    | beka@example.com
+ Aida    | aida@example.com
+ Nurai   | nurai@example.com
+(5 rows)
+
+
+database_labs=# SELECT name, email FROM students WHERE name = 'Timur';
+ name  |       email
+-------+-------------------
+ Timur | timur@example.com
+(1 row)
+
+
+database_labs=# SELECT student_id, name, faculty FROM students
+database_labs-# WHERE faculty = 'Engineering';
+ student_id |  name   |   faculty
+------------+---------+-------------
+          1 | Alymbek | Engineering
+          2 | Timur   | Engineering
+(2 rows)
+
+
+database_labs=# SELECT name, email, faculty FROM students ORDER BY name;
+  name   |        email        |   faculty
+---------+---------------------+-------------
+ Aida    | aida@example.com    | Medicine
+ Alymbek | alymbek@example.com | Engineering
+ Beka    | beka@example.com    | Mathematics
+ Nurai   | nurai@example.com   | Mathematics
+ Timur   | timur@example.com   | Engineering
+(5 rows)
+
+
+database_labs=# SELECT name, email, faculty FROM students ORDER BY name DESC;
+  name   |        email        |   faculty
+---------+---------------------+-------------
+ Timur   | timur@example.com   | Engineering
+ Nurai   | nurai@example.com   | Mathematics
+ Beka    | beka@example.com    | Mathematics
+ Alymbek | alymbek@example.com | Engineering
+ Aida    | aida@example.com    | Medicine
+(5 rows)
+
+
+database_labs=# SELECT name, email, faculty FROM students ORDER BY faculty, name;
+  name   |        email        |   faculty
+---------+---------------------+-------------
+ Alymbek | alymbek@example.com | Engineering
+ Timur   | timur@example.com   | Engineering
+ Beka    | beka@example.com    | Mathematics
+ Nurai   | nurai@example.com   | Mathematics
+ Aida    | aida@example.com    | Medicine
+(5 rows)
+
+
+database_labs=# SELECT name, email FROM students ORDER BY name LIMIT 2;
+  name   |        email
+---------+---------------------
+ Aida    | aida@example.com
+ Alymbek | alymbek@example.com
+(2 rows)
+
+
+database_labs=# SELECT name, email FROM students ORDER BY name LIMIT 2 OFFSET 2;
+ name  |       email
+-------+-------------------
+ Beka  | beka@example.com
+ Nurai | nurai@example.com
+(2 rows)
+
