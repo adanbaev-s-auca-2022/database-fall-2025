@@ -1,0 +1,240 @@
+//Primary keys
+
+//discovered all the ways to create tables with primary keys and their relations between each other
+
+
+
+database_labs=# CREATE TABLE students (
+database_labs(#     student_id INTEGER PRIMARY KEY,
+database_labs(#     name        VARCHAR(100),
+database_labs(#     email       VARCHAR(150)
+database_labs(# );
+CREATE TABLE
+database_labs=# \d students
+                       Table "public.students"
+   Column   |          Type          | Collation | Nullable | Default
+------------+------------------------+-----------+----------+---------
+ student_id | integer                |           | not null |
+ name       | character varying(100) |           |          |
+ email      | character varying(150) |           |          |
+Indexes:
+    "students_pkey" PRIMARY KEY, btree (student_id)
+
+
+database_labs=# DROP TABLE IF EXISTS students CASCADE;
+DROP TABLE
+database_labs=# CREATE TABLE students (
+database_labs(#     student_id INTEGER,
+database_labs(#     name        VARCHAR(100),
+database_labs(#     email       VARCHAR(150),
+database_labs(#     PRIMARY KEY (student_id)
+database_labs(# );
+CREATE TABLE
+database_labs=# \d students
+                       Table "public.students"
+   Column   |          Type          | Collation | Nullable | Default
+------------+------------------------+-----------+----------+---------
+ student_id | integer                |           | not null |
+ name       | character varying(100) |           |          |
+ email      | character varying(150) |           |          |
+Indexes:
+    "students_pkey" PRIMARY KEY, btree (student_id)
+
+
+database_labs=# DROP TABLE IF EXISTS students CASCADE;
+DROP TABLE
+database_labs=# CREATE TABLE students (
+database_labs(#     student_id INTEGER,
+database_labs(#     name        VARCHAR(100),
+database_labs(#     email       VARCHAR(150),
+database_labs(#     CONSTRAINT pk_students PRIMARY KEY (student_id)
+database_labs(# );
+CREATE TABLE
+database_labs=# \d+ students
+                                                  Table "public.students"
+   Column   |          Type          | Collation | Nullable | Default | Storage  | Compression | Stats target | Description
+------------+------------------------+-----------+----------+---------+----------+-------------+--------------+-------------
+ student_id | integer                |           | not null |         | plain    |             |              |
+ name       | character varying(100) |           |          |         | extended |             |              |
+ email      | character varying(150) |           |          |         | extended |             |              |
+Indexes:
+    "pk_students" PRIMARY KEY, btree (student_id)
+Access method: heap
+
+
+database_labs=# DROP TABLE IF EXISTS students CASCADE;
+DROP TABLE
+database_labs=# CREATE TABLE students (
+database_labs(#     student_id INTEGER,
+database_labs(#     name        VARCHAR(100),
+database_labs(#     email       VARCHAR(150)
+database_labs(# );
+CREATE TABLE
+database_labs=#
+database_labs=# ALTER TABLE students ADD CONSTRAINT pk_students PRIMARY KEY (student_id);
+ALTER TABLE
+database_labs=# \d students
+                       Table "public.students"
+   Column   |          Type          | Collation | Nullable | Default
+------------+------------------------+-----------+----------+---------
+ student_id | integer                |           | not null |
+ name       | character varying(100) |           |          |
+ email      | character varying(150) |           |          |
+Indexes:
+    "pk_students" PRIMARY KEY, btree (student_id)
+
+
+database_labs=# DROP TABLE IF EXISTS students CASCADE;
+DROP TABLE
+database_labs=# CREATE TABLE students (
+database_labs(#     student_id SERIAL PRIMARY KEY,
+database_labs(#     name        VARCHAR(100) NOT NULL,
+database_labs(#     email       VARCHAR(150) UNIQUE,
+database_labs(#     faculty     VARCHAR(50)
+database_labs(# );
+CREATE TABLE
+database_labs=# INSERT INTO students (name, email, faculty) VALUES
+database_labs-# ('Alice Johnson', 'alice@alatoo.edu.kg', 'Computer Science'),
+database_labs-# ('Bob Smith',     'bob@alatoo.edu.kg',   'Mathematics'),
+database_labs-# ('Carol Davis',   'carol@alatoo.edu.kg', 'Computer Science');
+INSERT 0 3
+database_labs=# SELECT * FROM students ORDER BY student_id;
+ student_id |     name      |        email        |     faculty
+------------+---------------+---------------------+------------------
+          1 | Alice Johnson | alice@alatoo.edu.kg | Computer Science
+          2 | Bob Smith     | bob@alatoo.edu.kg   | Mathematics
+          3 | Carol Davis   | carol@alatoo.edu.kg | Computer Science
+(3 rows)
+
+
+database_labs=# CREATE TABLE course_enrollments (
+database_labs(#     student_id INTEGER,
+database_labs(#     course_id  INTEGER,
+database_labs(#     semester   VARCHAR(20),
+database_labs(#     enrollment_date DATE DEFAULT CURRENT_DATE,
+database_labs(#     grade      CHAR(2),
+database_labs(#     PRIMARY KEY (student_id, course_id, semester)
+database_labs(# );
+CREATE TABLE
+database_labs=# INSERT INTO course_enrollments (student_id, course_id, semester, grade) VALUES
+database_labs-# (1, 101, '2024-Spring', 'A'),
+database_labs-# (1, 102, '2024-Spring', 'B+'),
+database_labs-# (2, 101, '2024-Spring', 'A-'),
+database_labs-# (1, 101, '2024-Fall',   'A+');
+INSERT 0 4
+database_labs=# SELECT * FROM course_enrollments ORDER BY student_id, course_id, semester;
+ student_id | course_id |  semester   | enrollment_date | grade
+------------+-----------+-------------+-----------------+-------
+          1 |       101 | 2024-Fall   | 2025-10-16      | A+
+          1 |       101 | 2024-Spring | 2025-10-16      | A
+          1 |       102 | 2024-Spring | 2025-10-16      | B+
+          2 |       101 | 2024-Spring | 2025-10-16      | A-
+(4 rows)
+
+
+database_labs=# CREATE TABLE products (
+database_labs(#     product_id SERIAL PRIMARY KEY,
+database_labs(#     product_name VARCHAR(100) NOT NULL,
+database_labs(#     price DECIMAL(10,2)
+database_labs(# );
+CREATE TABLE
+database_labs=# INSERT INTO products (product_name, price) VALUES ('Mouse', 19.99), ('Keyboard', 49.99);
+INSERT 0 2
+database_labs=# SELECT * FROM products;
+ product_id | product_name | price
+------------+--------------+-------
+          1 | Mouse        | 19.99
+          2 | Keyboard     | 49.99
+(2 rows)
+
+
+database_labs=# CREATE TABLE transactions (
+database_labs(#     transaction_id BIGSERIAL PRIMARY KEY,
+database_labs(#     amount DECIMAL(15,2),
+database_labs(#     transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+database_labs(# );
+CREATE TABLE
+database_labs=# INSERT INTO transactions (amount) VALUES (1000.00), (250000.50);
+INSERT 0 2
+database_labs=# SELECT * FROM transactions;
+ transaction_id |  amount   |      transaction_date
+----------------+-----------+----------------------------
+              1 |   1000.00 | 2025-10-16 09:08:33.125787
+              2 | 250000.50 | 2025-10-16 09:08:33.125787
+(2 rows)
+
+
+database_labs=# CREATE TABLE orders (
+database_labs(#     order_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+database_labs(#     customer_name VARCHAR(100),
+database_labs(#     order_date DATE DEFAULT CURRENT_DATE
+database_labs(# );
+CREATE TABLE
+database_labs=# INSERT INTO orders (customer_name) VALUES ('John Doe'), ('Jane Roe');
+INSERT 0 2
+database_labs=# SELECT * FROM orders;
+ order_id | customer_name | order_date
+----------+---------------+------------
+        1 | John Doe      | 2025-10-16
+        2 | Jane Roe      | 2025-10-16
+(2 rows)
+
+
+database_labs=# CREATE TABLE customers (
+database_labs(#     customer_id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+database_labs(#     customer_name VARCHAR(100),
+database_labs(#     email VARCHAR(150)
+database_labs(# );
+CREATE TABLE
+database_labs=# INSERT INTO customers (customer_name, email) VALUES ('Regular', 'reg@example.com');
+INSERT 0 1
+database_labs=# INSERT INTO customers (customer_id, customer_name, email) VALUES (1000, 'VIP Customer', 'vip@example.com');
+INSERT 0 1
+database_labs=# SELECT * FROM customers ORDER BY customer_id;
+ customer_id | customer_name |      email
+-------------+---------------+-----------------
+           1 | Regular       | reg@example.com
+        1000 | VIP Customer  | vip@example.com
+(2 rows)
+
+
+database_labs=# CREATE TABLE departments (
+database_labs(#     dept_id INTEGER PRIMARY KEY,
+database_labs(#     dept_name VARCHAR(100)
+database_labs(# );
+CREATE TABLE
+database_labs=# INSERT INTO departments VALUES (1, 'Computer Science');
+INSERT 0 1
+database_labs=# INSERT INTO departments VALUES (1, 'Mathematics');
+ERROR:  duplicate key value violates unique constraint "departments_pkey"
+DETAIL:  Key (dept_id)=(1) already exists.
+database_labs=# INSERT INTO departments VALUES (NULL, 'Physics');
+ERROR:  null value in column "dept_id" of relation "departments" violates not-null constraint
+DETAIL:  Failing row contains (null, Physics).
+
+//expected errors to discover
+
+database_labs=# \d departments
+                     Table "public.departments"
+  Column   |          Type          | Collation | Nullable | Default
+-----------+------------------------+-----------+----------+---------
+ dept_id   | integer                |           | not null |
+ dept_name | character varying(100) |           |          |
+Indexes:
+    "departments_pkey" PRIMARY KEY, btree (dept_id)
+
+
+database_labs=# DROP TABLE IF EXISTS departments;
+DROP TABLE
+database_labs=# DROP TABLE IF EXISTS customers;
+DROP TABLE
+database_labs=# DROP TABLE IF EXISTS orders;
+DROP TABLE
+database_labs=# DROP TABLE IF EXISTS transactions;
+DROP TABLE
+database_labs=# DROP TABLE IF EXISTS products;
+DROP TABLE
+database_labs=# DROP TABLE IF EXISTS course_enrollments;
+DROP TABLE
+database_labs=# DROP TABLE IF EXISTS students;
+DROP TABLE
