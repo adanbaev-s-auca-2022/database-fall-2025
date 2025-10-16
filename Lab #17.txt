@@ -1,0 +1,70 @@
+// Data Import_Export and Backup
+
+database_labs=# CREATE TABLE products (
+database_labs(#   product_id SERIAL PRIMARY KEY,
+database_labs(#   product_name VARCHAR(100),
+database_labs(#   price NUMERIC(10,2)
+database_labs(# );
+CREATE TABLE
+database_labs=#
+database_labs=# CREATE TABLE customers (
+database_labs(#   customer_id SERIAL PRIMARY KEY,
+database_labs(#   first_name VARCHAR(50),
+database_labs(#   last_name  VARCHAR(50),
+database_labs(#   email      VARCHAR(150)
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE orders (
+database_labs(#   order_id SERIAL PRIMARY KEY,
+database_labs(#   order_date DATE,
+database_labs(#   total NUMERIC(10,2)
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE customer_feedback (
+database_labs(#   feedback_id SERIAL PRIMARY KEY,
+database_labs(#   notes TEXT
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE sales_data (
+database_labs(#   id SERIAL PRIMARY KEY,
+database_labs(#   amount NUMERIC(10,2),
+database_labs(#   note TEXT
+database_labs(# );
+CREATE TABLE
+database_labs=# INSERT INTO products (product_name, price) VALUES
+database_labs-# ('Laptop',1200),('Phone',700),('Coffee',8);
+INSERT 0 3
+database_labs=#
+database_labs=# INSERT INTO customers (first_name,last_name,email) VALUES
+database_labs-# ('Aibek','Sharshenov','aibek@example.com'),
+database_labs-# ('Ainura','Toktomamatova','ainura@example.com');
+INSERT 0 2
+database_labs=#
+database_labs=# INSERT INTO orders (order_date,total) VALUES
+database_labs-# ('2024-10-01',150.50),('2024-10-02',220.00);
+INSERT 0 2
+database_labs=#
+database_labs=# INSERT INTO customer_feedback (notes) VALUES
+database_labs-# ('Great, includes "quotes", commas, etc.'), ('All good');
+INSERT 0 2
+database_labs=#
+database_labs=# INSERT INTO sales_data (amount,note) VALUES
+database_labs-# (10.5,'ok'),(NULL,'NULL sample');
+INSERT 0 2
+database_labs=# \copy products  TO 'C:/pg/lab17/products.csv'  WITH CSV HEADER
+C:/pg/lab17/products.csv: No such file or directory
+database_labs=# \copy products  TO 'C:/products.csv'  WITH CSV HEADER
+C:/products.csv: Permission denied
+database_labs=# \copy products TO 'C:/Users/sulta/Documents/products.csv' WITH CSV HEADER;
+COPY 3
+database_labs=# \copy customers TO 'C:/Users/sulta/Documents/customers.csv' WITH CSV HEADER
+COPY 2
+database_labs=# \copy customers TO 'C:/Users/sulta/Documents/customers_semicolon.csv' WITH CSV HEADER DELIMITER ';' QUOTE '"'
+COPY 2
+database_labs=# \copy (SELECT * FROM products WHERE price >= 700) TO 'C:/Users/sulta/Documents/expensive_products.csv' WITH CSV HEADER
+COPY 2
+database_labs=# \copy products(product_name,price) FROM 'C:/Users/sulta/Documents/products_new.csv' WITH CSV HEADER
+C:/Users/sulta/Documents/products_new.csv: No such file or directory
+database_labs=# \copy customer_feedback TO 'C:/Users/sulta/Documents/feedback.csv' WITH CSV HEADER DELIMITER ',' QUOTE '"' ESCAPE '"'
+COPY 2
+database_labs=#
