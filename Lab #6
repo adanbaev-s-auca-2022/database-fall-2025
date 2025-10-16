@@ -1,0 +1,128 @@
+//Tables, Data Types and Constraints
+
+database_labs=# CREATE TABLE students (
+database_labs(#     student_id SERIAL PRIMARY KEY,
+database_labs(#     first_name VARCHAR(50) NOT NULL,
+database_labs(#     last_name VARCHAR(50) NOT NULL,
+database_labs(#     email VARCHAR(100) UNIQUE NOT NULL,
+database_labs(#     faculty VARCHAR(100)
+database_labs(# );
+CREATE TABLE
+database_labs=# \d students
+                                          Table "public.students"
+   Column   |          Type          | Collation | Nullable |                   Default
+------------+------------------------+-----------+----------+----------------------------------------------
+ student_id | integer                |           | not null | nextval('students_student_id_seq'::regclass)
+ first_name | character varying(50)  |           | not null |
+ last_name  | character varying(50)  |           | not null |
+ email      | character varying(100) |           | not null |
+ faculty    | character varying(100) |           |          |
+Indexes:
+    "students_pkey" PRIMARY KEY, btree (student_id)
+    "students_email_key" UNIQUE CONSTRAINT, btree (email)
+
+
+database_labs=# INSERT INTO students (first_name, last_name, email, faculty) VALUES
+database_labs-# ('Alymbek', 'Sadykov', 'alymbek@example.com', 'Engineering'),
+database_labs-# ('Timur', 'Bekov', 'timur@example.com', 'Engineering'),
+database_labs-# ('Aida', 'Nurmatova', 'aida@example.com', 'Medicine'),
+database_labs-# ('Nurai', 'Tilekova', 'nurai@example.com', 'Mathematics'),
+database_labs-# ('Beka', 'Abdullaev', 'beka@example.com', 'Mathematics');
+INSERT 0 5
+database_labs=# SELECT * FROM students;
+ student_id | first_name | last_name |        email        |   faculty
+------------+------------+-----------+---------------------+-------------
+          1 | Alymbek    | Sadykov   | alymbek@example.com | Engineering
+          2 | Timur      | Bekov     | timur@example.com   | Engineering
+          3 | Aida       | Nurmatova | aida@example.com    | Medicine
+          4 | Nurai      | Tilekova  | nurai@example.com   | Mathematics
+          5 | Beka       | Abdullaev | beka@example.com    | Mathematics
+(5 rows)
+
+
+database_labs=# SELECT first_name, last_name, email FROM students;
+ first_name | last_name |        email
+------------+-----------+---------------------
+ Alymbek    | Sadykov   | alymbek@example.com
+ Timur      | Bekov     | timur@example.com
+ Aida       | Nurmatova | aida@example.com
+ Nurai      | Tilekova  | nurai@example.com
+ Beka       | Abdullaev | beka@example.com
+(5 rows)
+
+
+database_labs=# SELECT first_name, email FROM students WHERE faculty = 'Engineering';
+ first_name |        email
+------------+---------------------
+ Alymbek    | alymbek@example.com
+ Timur      | timur@example.com
+(2 rows)
+
+
+database_labs=# ALTER TABLE students
+database_labs-# ADD CONSTRAINT email_check CHECK (POSITION('@' IN email) > 1);
+ALTER TABLE
+database_labs=# ALTER TABLE students
+database_labs-# ALTER COLUMN faculty SET NOT NULL;
+ALTER TABLE
+database_labs=# ALTER TABLE students ADD COLUMN enrollment_year INT;
+ALTER TABLE
+database_labs=# ALTER TABLE students RENAME COLUMN faculty TO department;
+ALTER TABLE
+database_labs=# ALTER TABLE students ALTER COLUMN email TYPE TEXT;
+ALTER TABLE
+database_labs=# \d students
+                                            Table "public.students"
+     Column      |          Type          | Collation | Nullable |                   Default
+-----------------+------------------------+-----------+----------+----------------------------------------------
+ student_id      | integer                |           | not null | nextval('students_student_id_seq'::regclass)
+ first_name      | character varying(50)  |           | not null |
+ last_name       | character varying(50)  |           | not null |
+ email           | text                   |           | not null |
+ department      | character varying(100) |           | not null |
+ enrollment_year | integer                |           |          |
+Indexes:
+    "students_pkey" PRIMARY KEY, btree (student_id)
+    "students_email_key" UNIQUE CONSTRAINT, btree (email)
+Check constraints:
+    "email_check" CHECK (POSITION(('@'::text) IN (email)) > 1)
+
+
+database_labs=# ALTER TABLE students DROP CONSTRAINT email_check;
+ALTER TABLE
+database_labs=# ALTER TABLE students DROP COLUMN enrollment_year;
+ALTER TABLE
+database_labs=# CREATE TEMP TABLE temp_students (
+database_labs(#     name VARCHAR(50),
+database_labs(#     grade INT CHECK (grade >= 0 AND grade <= 100)
+database_labs(# );
+CREATE TABLE
+database_labs=# INSERT INTO temp_students (name, grade)
+database_labs-# VALUES ('Alymbek', 95), ('Aida', 82);
+INSERT 0 2
+database_labs=# SELECT * FROM temp_students;
+  name   | grade
+---------+-------
+ Alymbek |    95
+ Aida    |    82
+(2 rows)
+
+
+database_labs=# \d temp_students
+                 Table "pg_temp_4.temp_students"
+ Column |         Type          | Collation | Nullable | Default
+--------+-----------------------+-----------+----------+---------
+ name   | character varying(50) |           |          |
+ grade  | integer               |           |          |
+Check constraints:
+    "temp_students_grade_check" CHECK (grade >= 0 AND grade <= 100)
+
+
+database_labs=# DROP TABLE IF EXISTS students;
+DROP TABLE
+database_labs=# \dt
+              List of relations
+  Schema   |     Name      | Type  |  Owner
+-----------+---------------+-------+----------
+ pg_temp_4 | temp_students | table | postgres
+(1 row)
