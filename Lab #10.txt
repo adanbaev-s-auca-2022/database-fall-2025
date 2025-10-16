@@ -1,0 +1,34 @@
+// Viewing Database and Table Structure
+
+database_labs=# CREATE TABLE books (
+database_labs(#     book_id    SERIAL PRIMARY KEY,
+database_labs(#     isbn       VARCHAR(20) UNIQUE,         -- optional unique natural key
+database_labs(#     title      VARCHAR(300) NOT NULL,
+database_labs(#     published_year INT
+database_labs(# );
+CREATE TABLE
+database_labs=# \dt
+         List of relations
+ Schema | Name  | Type  |  Owner
+--------+-------+-------+----------
+ public | books | table | postgres
+(1 row)
+
+
+database_labs=# \d books
+                                          Table "public.books"
+     Column     |          Type          | Collation | Nullable |                Default
+----------------+------------------------+-----------+----------+----------------------------------------
+ book_id        | integer                |           | not null | nextval('books_book_id_seq'::regclass)
+ isbn           | character varying(20)  |           |          |
+ title          | character varying(300) |           | not null |
+ published_year | integer                |           |          |
+Indexes:
+    "books_pkey" PRIMARY KEY, btree (book_id)
+    "books_isbn_key" UNIQUE CONSTRAINT, btree (isbn)
+
+
+database_labs=# DROP TABLE books;
+DROP TABLE
+database_labs=# \dt
+Did not find any relations.
