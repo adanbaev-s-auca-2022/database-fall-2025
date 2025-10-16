@@ -1,0 +1,409 @@
+// Foreign Keys and Relationships
+
+database_labs=# CREATE TABLE students (
+database_labs(#     student_id SERIAL PRIMARY KEY,
+database_labs(#     name       VARCHAR(100) NOT NULL,
+database_labs(#     email      VARCHAR(150) UNIQUE
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE courses (
+database_labs(#     course_id  SERIAL PRIMARY KEY,
+database_labs(#     code       VARCHAR(20) UNIQUE NOT NULL,
+database_labs(#     title      VARCHAR(200) NOT NULL
+database_labs(# );
+CREATE TABLE
+database_labs=# \d students
+                                          Table "public.students"
+   Column   |          Type          | Collation | Nullable |                   Default
+------------+------------------------+-----------+----------+----------------------------------------------
+ student_id | integer                |           | not null | nextval('students_student_id_seq'::regclass)
+ name       | character varying(100) |           | not null |
+ email      | character varying(150) |           |          |
+Indexes:
+    "students_pkey" PRIMARY KEY, btree (student_id)
+    "students_email_key" UNIQUE CONSTRAINT, btree (email)
+
+
+database_labs=# \d courses
+                                         Table "public.courses"
+  Column   |          Type          | Collation | Nullable |                  Default
+-----------+------------------------+-----------+----------+--------------------------------------------
+ course_id | integer                |           | not null | nextval('courses_course_id_seq'::regclass)
+ code      | character varying(20)  |           | not null |
+ title     | character varying(200) |           | not null |
+Indexes:
+    "courses_pkey" PRIMARY KEY, btree (course_id)
+    "courses_code_key" UNIQUE CONSTRAINT, btree (code)
+
+
+database_labs=# INSERT INTO students (name, email) VALUES
+database_labs-# ('Alice', 'alice@example.com'),
+database_labs-# ('Bob',   'bob@example.com'),
+database_labs-# ('Carol', 'carol@example.com');
+INSERT 0 3
+database_labs=# INSERT INTO courses (code, title) VALUES
+database_labs-# ('CS101', 'Intro to CS'),
+database_labs-# ('MATH200', 'Discrete Math'),
+database_labs-# ('HIST10', 'World History');
+INSERT 0 3
+database_labs=# SELECT * FROM students ORDER BY student_id;
+ student_id | name  |       email
+------------+-------+-------------------
+          1 | Alice | alice@example.com
+          2 | Bob   | bob@example.com
+          3 | Carol | carol@example.com
+(3 rows)
+
+
+database_labs=# SELECT * FROM courses ORDER BY course_id;
+ course_id |  code   |     title
+-----------+---------+---------------
+         1 | CS101   | Intro to CS
+         2 | MATH200 | Discrete Math
+         3 | HIST10  | World History
+(3 rows)
+
+
+database_labs=# CREATE TABLE enrollments (
+database_labs(#     enrollment_id SERIAL PRIMARY KEY,
+database_labs(#     student_id INTEGER NOT NULL,
+database_labs(#     course_id  INTEGER NOT NULL,
+database_labs(#     semester   VARCHAR(20) NOT NULL,
+database_labs(#     enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+database_labs(#     CONSTRAINT fk_enroll_student
+database_labs(#         FOREIGN KEY (student_id) REFERENCES students(student_id)
+database_labs(#         ON DELETE CASCADE ON UPDATE CASCADE,
+database_labs(#     CONSTRAINT fk_enroll_course
+database_labs(#         FOREIGN KEY (course_id)  REFERENCES courses(course_id)
+database_labs(#         ON DELETE CASCADE ON UPDATE CASCADE,
+database_labs(#     CONSTRAINT uq_enroll UNIQUE (student_id, course_id, semester) -- prevent duplicate enrolls
+database_labs(# );
+CREATE TABLE
+database_labs=# \d enrollments
+                                               Table "public.enrollments"
+    Column     |            Type             | Collation | Nullable |                      Default
+---------------+-----------------------------+-----------+----------+----------------------------------------------------
+ enrollment_id | integer                     |           | not null | nextval('enrollments_enrollment_id_seq'::regclass)
+ student_id    | integer                     |           | not null |
+ course_id     | integer                     |           | not null |
+ semester      | character varying(20)       |           | not null |
+ enrolled_at   | timestamp without time zone |           |          | CURRENT_TIMESTAMP
+Indexes:
+    "enrollments_pkey" PRIMARY KEY, btree (enrollment_id)
+    "uq_enroll" UNIQUE CONSTRAINT, btree (student_id, course_id, semester)
+Foreign-key constraints:
+    "fk_enroll_course" FOREIGN KEY (course_id) REFERENCES courses(course_id) ON UPDATE CASCADE ON DELETE CASCADE
+    "fk_enroll_student" FOREIGN KEY (student_id) REFERENCES students(student_id) ON UPDATE CASCADE ON DELETE CASCADE
+
+
+database_labs=# INSERT INTO enrollments (student_id, course_id, semester)
+database_labs-# VALUES (999, 1, '2025-Spring');
+ERROR:  insert or update on table "enrollments" violates foreign key constraint "fk_enroll_student"
+DETAIL:  Key (student_id)=(999) is not present in table "students".
+//expected error
+database_labs=# INSERT INTO enrollments (student_id, course_id, semester)
+database_labs-# VALUES
+database_labs-# (1, 1, '2025-Spring'),
+database_labs-# (1, 2, '2025-Spring'),
+database_labs-# (2, 1, '2025-Spring');
+INSERT 0 3
+database_labs=# SELECT * FROM enrollments ORDER BY enrollment_id;
+ enrollment_id | student_id | course_id |  semester   |        enrolled_at
+---------------+------------+-----------+-------------+----------------------------
+             2 |          1 |         1 | 2025-Spring | 2025-10-16 09:15:15.049528
+             3 |          1 |         2 | 2025-Spring | 2025-10-16 09:15:15.049528
+             4 |          2 |         1 | 2025-Spring | 2025-10-16 09:15:15.049528
+(3 rows)
+
+
+database_labs=# UPDATE students SET student_id = 100 WHERE student_id = 1;
+UPDATE 1
+database_labs=# SELECT * FROM students ORDER BY student_id;
+ student_id | name  |       email
+------------+-------+-------------------
+          2 | Bob   | bob@example.com
+          3 | Carol | carol@example.com
+        100 | Alice | alice@example.com
+(3 rows)
+
+
+database_labs=# SELECT * FROM enrollments ORDER BY enrollment_id;
+ enrollment_id | student_id | course_id |  semester   |        enrolled_at
+---------------+------------+-----------+-------------+----------------------------
+             2 |        100 |         1 | 2025-Spring | 2025-10-16 09:15:15.049528
+             3 |        100 |         2 | 2025-Spring | 2025-10-16 09:15:15.049528
+             4 |          2 |         1 | 2025-Spring | 2025-10-16 09:15:15.049528
+(3 rows)
+
+
+database_labs=# DELETE FROM students WHERE student_id = 100;
+DELETE 1
+database_labs=# SELECT * FROM students ORDER BY student_id;
+ student_id | name  |       email
+------------+-------+-------------------
+          2 | Bob   | bob@example.com
+          3 | Carol | carol@example.com
+(2 rows)
+
+
+database_labs=# SELECT * FROM enrollments ORDER BY enrollment_id;
+ enrollment_id | student_id | course_id |  semester   |        enrolled_at
+---------------+------------+-----------+-------------+----------------------------
+             4 |          2 |         1 | 2025-Spring | 2025-10-16 09:15:15.049528
+(1 row)
+
+
+database_labs=# CREATE TABLE departments (
+database_labs(#     dept_id SERIAL PRIMARY KEY,
+database_labs(#     dept_name VARCHAR(100) UNIQUE NOT NULL
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE employees (
+database_labs(#     emp_id SERIAL PRIMARY KEY,
+database_labs(#     full_name VARCHAR(100) NOT NULL,
+database_labs(#     dept_id INTEGER REFERENCES departments(dept_id) -- default: RESTRICT on delete
+database_labs(# );
+CREATE TABLE
+database_labs=#
+database_labs=# INSERT INTO departments (dept_name) VALUES ('IT'), ('HR');
+INSERT 0 2
+database_labs=# INSERT INTO employees (full_name, dept_id) VALUES
+database_labs-# ('Dev One', 1), ('Dev Two', 1), ('People Ops', 2);
+INSERT 0 3
+database_labs=# DELETE FROM departments WHERE dept_id = 1;
+ERROR:  update or delete on table "departments" violates foreign key constraint "employees_dept_id_fkey" on table "employees"
+DETAIL:  Key (dept_id)=(1) is still referenced from table "employees".
+//expected error
+database_labs=# DELETE FROM employees WHERE dept_id = 1;
+DELETE 2
+database_labs=# DELETE FROM departments WHERE dept_id = 1;
+DELETE 1
+database_labs=# SELECT * FROM departments ORDER BY dept_id;
+ dept_id | dept_name
+---------+-----------
+       2 | HR
+(1 row)
+
+
+database_labs=# CREATE TABLE scores (
+database_labs(#     score_id SERIAL PRIMARY KEY,
+database_labs(#     student_id INTEGER,
+database_labs(#     exam VARCHAR(50) NOT NULL,
+database_labs(#     score INT CHECK (score BETWEEN 0 AND 100),
+database_labs(#     CONSTRAINT fk_scores_student
+database_labs(#       FOREIGN KEY (student_id) REFERENCES students(student_id)
+database_labs(#       ON DELETE SET NULL ON UPDATE CASCADE
+database_labs(# );
+CREATE TABLE
+database_labs=# INSERT INTO scores (student_id, exam, score) VALUES
+database_labs-# (2, 'Midterm', 88),
+database_labs-# (2, 'Final',   92),
+database_labs-# (3, 'Midterm', 77);
+INSERT 0 3
+database_labs=# DELETE FROM students WHERE student_id = 2;
+DELETE 1
+database_labs=# SELECT * FROM scores ORDER BY score_id;
+ score_id | student_id |  exam   | score
+----------+------------+---------+-------
+        1 |            | Midterm |    88
+        2 |            | Final   |    92
+        3 |          3 | Midterm |    77
+(3 rows)
+
+
+database_labs=# CREATE TABLE student_profiles (
+database_labs(#     profile_id SERIAL PRIMARY KEY,
+database_labs(#     student_id INTEGER UNIQUE NOT NULL,
+database_labs(#     birthdate DATE,
+database_labs(#     phone VARCHAR(30),
+database_labs(#     CONSTRAINT fk_profile_student
+database_labs(#       FOREIGN KEY (student_id) REFERENCES students(student_id)
+database_labs(#       ON DELETE CASCADE ON UPDATE CASCADE
+database_labs(# );
+CREATE TABLE
+database_labs=# INSERT INTO student_profiles (student_id, birthdate, phone)
+database_labs-# SELECT student_id, '2004-01-01', '+996-555-000111' FROM students LIMIT 1;
+INSERT 0 1
+database_labs=# INSERT INTO student_profiles (student_id, birthdate, phone)
+database_labs-# SELECT student_id, '2004-02-02', '+996-555-000222' FROM students LIMIT 1;
+ERROR:  duplicate key value violates unique constraint "student_profiles_student_id_key"
+DETAIL:  Key (student_id)=(3) already exists.
+//expected error
+database_labs=# SELECT s.student_id, s.name, p.profile_id, p.phone
+database_labs-# FROM students s LEFT JOIN student_profiles p USING (student_id)
+database_labs-# ORDER BY s.student_id;
+ student_id | name  | profile_id |      phone
+------------+-------+------------+-----------------
+          3 | Carol |          1 | +996-555-000111
+(1 row)
+
+
+database_labs=# CREATE TABLE tags (
+database_labs(#     tag_id SERIAL PRIMARY KEY,
+database_labs(#     tag_name VARCHAR(50) UNIQUE NOT NULL
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE student_tags (
+database_labs(#     student_id INTEGER NOT NULL,
+database_labs(#     tag_id     INTEGER NOT NULL,
+database_labs(#     added_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+database_labs(#     PRIMARY KEY (student_id, tag_id),
+database_labs(#     CONSTRAINT fk_studtags_student
+database_labs(#       FOREIGN KEY (student_id) REFERENCES students(student_id)
+database_labs(#       ON DELETE CASCADE ON UPDATE CASCADE,
+database_labs(#     CONSTRAINT fk_studtags_tag
+database_labs(#       FOREIGN KEY (tag_id) REFERENCES tags(tag_id)
+database_labs(#       ON DELETE CASCADE ON UPDATE CASCADE
+database_labs(# );
+CREATE TABLE
+database_labs=# INSERT INTO tags (tag_name) VALUES ('honors'), ('sports'), ('volunteer');
+INSERT 0 3
+database_labs=# INSERT INTO student_tags (student_id, tag_id) VALUES (3, 1), (3, 3);
+INSERT 0 2
+database_labs=# SELECT * FROM student_tags ORDER BY student_id, tag_id;
+ student_id | tag_id |          added_at
+------------+--------+----------------------------
+          3 |      1 | 2025-10-16 09:19:05.636508
+          3 |      3 | 2025-10-16 09:19:05.636508
+(2 rows)
+
+
+database_labs=# INSERT INTO student_tags (student_id, tag_id) VALUES (3, 1);
+ERROR:  duplicate key value violates unique constraint "student_tags_pkey"
+DETAIL:  Key (student_id, tag_id)=(3, 1) already exists.
+\\expected error
+database_labs=# DELETE FROM tags WHERE tag_id = 3;
+DELETE 1
+database_labs=# SELECT * FROM tags ORDER BY tag_id;
+ tag_id | tag_name
+--------+----------
+      1 | honors
+      2 | sports
+(2 rows)
+
+
+database_labs=# SELECT * FROM student_tags ORDER BY student_id, tag_id;
+ student_id | tag_id |          added_at
+------------+--------+----------------------------
+          3 |      1 | 2025-10-16 09:19:05.636508
+(1 row)
+
+
+database_labs=# \d students
+                                          Table "public.students"
+   Column   |          Type          | Collation | Nullable |                   Default
+------------+------------------------+-----------+----------+----------------------------------------------
+ student_id | integer                |           | not null | nextval('students_student_id_seq'::regclass)
+ name       | character varying(100) |           | not null |
+ email      | character varying(150) |           |          |
+Indexes:
+    "students_pkey" PRIMARY KEY, btree (student_id)
+    "students_email_key" UNIQUE CONSTRAINT, btree (email)
+Referenced by:
+    TABLE "enrollments" CONSTRAINT "fk_enroll_student" FOREIGN KEY (student_id) REFERENCES students(student_id) ON UPDATE CASCADE ON DELETE CASCADE
+    TABLE "student_profiles" CONSTRAINT "fk_profile_student" FOREIGN KEY (student_id) REFERENCES students(student_id) ON UPDATE CASCADE ON DELETE CASCADE
+    TABLE "scores" CONSTRAINT "fk_scores_student" FOREIGN KEY (student_id) REFERENCES students(student_id) ON UPDATE CASCADE ON DELETE SET NULL
+    TABLE "student_tags" CONSTRAINT "fk_studtags_student" FOREIGN KEY (student_id) REFERENCES students(student_id) ON UPDATE CASCADE ON DELETE CASCADE
+
+
+database_labs=# enrollments
+database_labs-# \d enrollments
+                                               Table "public.enrollments"
+    Column     |            Type             | Collation | Nullable |                      Default
+---------------+-----------------------------+-----------+----------+----------------------------------------------------
+ enrollment_id | integer                     |           | not null | nextval('enrollments_enrollment_id_seq'::regclass)
+ student_id    | integer                     |           | not null |
+ course_id     | integer                     |           | not null |
+ semester      | character varying(20)       |           | not null |
+ enrolled_at   | timestamp without time zone |           |          | CURRENT_TIMESTAMP
+Indexes:
+    "enrollments_pkey" PRIMARY KEY, btree (enrollment_id)
+    "uq_enroll" UNIQUE CONSTRAINT, btree (student_id, course_id, semester)
+Foreign-key constraints:
+    "fk_enroll_course" FOREIGN KEY (course_id) REFERENCES courses(course_id) ON UPDATE CASCADE ON DELETE CASCADE
+    "fk_enroll_student" FOREIGN KEY (student_id) REFERENCES students(student_id) ON UPDATE CASCADE ON DELETE CASCADE
+
+
+database_labs-# \d departments
+                                        Table "public.departments"
+  Column   |          Type          | Collation | Nullable |                   Default
+-----------+------------------------+-----------+----------+----------------------------------------------
+ dept_id   | integer                |           | not null | nextval('departments_dept_id_seq'::regclass)
+ dept_name | character varying(100) |           | not null |
+Indexes:
+    "departments_pkey" PRIMARY KEY, btree (dept_id)
+    "departments_dept_name_key" UNIQUE CONSTRAINT, btree (dept_name)
+Referenced by:
+    TABLE "employees" CONSTRAINT "employees_dept_id_fkey" FOREIGN KEY (dept_id) REFERENCES departments(dept_id)
+
+
+database_labs-# \d employees
+                                       Table "public.employees"
+  Column   |          Type          | Collation | Nullable |                  Default
+-----------+------------------------+-----------+----------+-------------------------------------------
+ emp_id    | integer                |           | not null | nextval('employees_emp_id_seq'::regclass)
+ full_name | character varying(100) |           | not null |
+ dept_id   | integer                |           |          |
+Indexes:
+    "employees_pkey" PRIMARY KEY, btree (emp_id)
+Foreign-key constraints:
+    "employees_dept_id_fkey" FOREIGN KEY (dept_id) REFERENCES departments(dept_id)
+
+
+database_labs-# \d scores
+                                        Table "public.scores"
+   Column   |         Type          | Collation | Nullable |                 Default
+------------+-----------------------+-----------+----------+------------------------------------------
+ score_id   | integer               |           | not null | nextval('scores_score_id_seq'::regclass)
+ student_id | integer               |           |          |
+ exam       | character varying(50) |           | not null |
+ score      | integer               |           |          |
+Indexes:
+    "scores_pkey" PRIMARY KEY, btree (score_id)
+Check constraints:
+    "scores_score_check" CHECK (score >= 0 AND score <= 100)
+Foreign-key constraints:
+    "fk_scores_student" FOREIGN KEY (student_id) REFERENCES students(student_id) ON UPDATE CASCADE ON DELETE SET NULL
+
+
+database_labs-# \d student_profiles
+                                         Table "public.student_profiles"
+   Column   |         Type          | Collation | Nullable |                       Default
+------------+-----------------------+-----------+----------+------------------------------------------------------
+ profile_id | integer               |           | not null | nextval('student_profiles_profile_id_seq'::regclass)
+ student_id | integer               |           | not null |
+ birthdate  | date                  |           |          |
+ phone      | character varying(30) |           |          |
+Indexes:
+    "student_profiles_pkey" PRIMARY KEY, btree (profile_id)
+    "student_profiles_student_id_key" UNIQUE CONSTRAINT, btree (student_id)
+Foreign-key constraints:
+    "fk_profile_student" FOREIGN KEY (student_id) REFERENCES students(student_id) ON UPDATE CASCADE ON DELETE CASCADE
+
+
+database_labs-# \d tags
+                                      Table "public.tags"
+  Column  |         Type          | Collation | Nullable |               Default
+----------+-----------------------+-----------+----------+--------------------------------------
+ tag_id   | integer               |           | not null | nextval('tags_tag_id_seq'::regclass)
+ tag_name | character varying(50) |           | not null |
+Indexes:
+    "tags_pkey" PRIMARY KEY, btree (tag_id)
+    "tags_tag_name_key" UNIQUE CONSTRAINT, btree (tag_name)
+Referenced by:
+    TABLE "student_tags" CONSTRAINT "fk_studtags_tag" FOREIGN KEY (tag_id) REFERENCES tags(tag_id) ON UPDATE CASCADE ON DELETE CASCADE
+
+
+database_labs-# \d student_tags
+                             Table "public.student_tags"
+   Column   |            Type             | Collation | Nullable |      Default
+------------+-----------------------------+-----------+----------+-------------------
+ student_id | integer                     |           | not null |
+ tag_id     | integer                     |           | not null |
+ added_at   | timestamp without time zone |           |          | CURRENT_TIMESTAMP
+Indexes:
+    "student_tags_pkey" PRIMARY KEY, btree (student_id, tag_id)
+Foreign-key constraints:
+    "fk_studtags_student" FOREIGN KEY (student_id) REFERENCES students(student_id) ON UPDATE CASCADE ON DELETE CASCADE
+    "fk_studtags_tag" FOREIGN KEY (tag_id) REFERENCES tags(tag_id) ON UPDATE CASCADE ON DELETE CASCADE
+
