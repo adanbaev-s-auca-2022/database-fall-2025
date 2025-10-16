@@ -1,0 +1,199 @@
+// Database desing basics
+
+database_labs=# CREATE TABLE authors (
+database_labs(#     author_id  SERIAL PRIMARY KEY,
+database_labs(#     full_name  VARCHAR(200) NOT NULL UNIQUE
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE books (
+database_labs(#     book_id    SERIAL PRIMARY KEY,
+database_labs(#     isbn       VARCHAR(20) UNIQUE,
+database_labs(#     title      VARCHAR(300) NOT NULL,
+database_labs(#     published_year INT
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE members (
+database_labs(#     member_id  SERIAL PRIMARY KEY,
+database_labs(#     full_name  VARCHAR(200) NOT NULL,
+database_labs(#     email      VARCHAR(150) UNIQUE,
+database_labs(#     joined_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE book_authors (
+database_labs(#     book_id   INTEGER NOT NULL,
+database_labs(#     author_id INTEGER NOT NULL,
+database_labs(#     PRIMARY KEY (book_id, author_id),
+database_labs(#     CONSTRAINT fk_ba_book
+database_labs(#         FOREIGN KEY (book_id) REFERENCES books(book_id)
+database_labs(#         ON UPDATE CASCADE ON DELETE CASCADE,
+database_labs(#     CONSTRAINT fk_ba_author
+database_labs(#         FOREIGN KEY (author_id) REFERENCES authors(author_id)
+database_labs(#         ON UPDATE CASCADE ON DELETE CASCADE
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE loans (
+database_labs(#     loan_id     SERIAL PRIMARY KEY,
+database_labs(#     member_id   INTEGER NOT NULL,
+database_labs(#     book_id     INTEGER NOT NULL,
+database_labs(#     borrowed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+database_labs(#     due_date    DATE NOT NULL,
+database_labs(#     returned_at TIMESTAMP,                 -- NULL => not yet returned
+database_labs(#     late_fee    NUMERIC(10,2) DEFAULT 0,   -- track late fees (if any)
+database_labs(#     CONSTRAINT fk_loans_member
+database_labs(#         FOREIGN KEY (member_id) REFERENCES members(member_id)
+database_labs(#         ON UPDATE CASCADE ON DELETE RESTRICT,
+database_labs(#     CONSTRAINT fk_loans_book
+database_labs(#         FOREIGN KEY (book_id)   REFERENCES books(book_id)
+database_labs(#         ON UPDATE CASCADE ON DELETE RESTRICT
+database_labs(# );
+CREATE TABLE
+database_labs=# \d authors
+                                         Table "public.authors"
+  Column   |          Type          | Collation | Nullable |                  Default
+-----------+------------------------+-----------+----------+--------------------------------------------
+ author_id | integer                |           | not null | nextval('authors_author_id_seq'::regclass)
+ full_name | character varying(200) |           | not null |
+Indexes:
+    "authors_pkey" PRIMARY KEY, btree (author_id)
+    "authors_full_name_key" UNIQUE CONSTRAINT, btree (full_name)
+Referenced by:
+    TABLE "book_authors" CONSTRAINT "fk_ba_author" FOREIGN KEY (author_id) REFERENCES authors(author_id) ON UPDATE CASCADE ON DELETE CASCADE
+
+
+database_labs=# \d books
+                                          Table "public.books"
+     Column     |          Type          | Collation | Nullable |                Default
+----------------+------------------------+-----------+----------+----------------------------------------
+ book_id        | integer                |           | not null | nextval('books_book_id_seq'::regclass)
+ isbn           | character varying(20)  |           |          |
+ title          | character varying(300) |           | not null |
+ published_year | integer                |           |          |
+Indexes:
+    "books_pkey" PRIMARY KEY, btree (book_id)
+    "books_isbn_key" UNIQUE CONSTRAINT, btree (isbn)
+Referenced by:
+    TABLE "book_authors" CONSTRAINT "fk_ba_book" FOREIGN KEY (book_id) REFERENCES books(book_id) ON UPDATE CASCADE ON DELETE CASCADE
+    TABLE "loans" CONSTRAINT "fk_loans_book" FOREIGN KEY (book_id) REFERENCES books(book_id) ON UPDATE CASCADE ON DELETE RESTRICT
+
+
+database_labs=# \d members
+                                           Table "public.members"
+  Column   |            Type             | Collation | Nullable |                  Default
+-----------+-----------------------------+-----------+----------+--------------------------------------------
+ member_id | integer                     |           | not null | nextval('members_member_id_seq'::regclass)
+ full_name | character varying(200)      |           | not null |
+ email     | character varying(150)      |           |          |
+ joined_at | timestamp without time zone |           |          | CURRENT_TIMESTAMP
+Indexes:
+    "members_pkey" PRIMARY KEY, btree (member_id)
+    "members_email_key" UNIQUE CONSTRAINT, btree (email)
+Referenced by:
+    TABLE "loans" CONSTRAINT "fk_loans_member" FOREIGN KEY (member_id) REFERENCES members(member_id) ON UPDATE CASCADE ON DELETE RESTRICT
+
+
+database_labs=# \d book_authors
+             Table "public.book_authors"
+  Column   |  Type   | Collation | Nullable | Default
+-----------+---------+-----------+----------+---------
+ book_id   | integer |           | not null |
+ author_id | integer |           | not null |
+Indexes:
+    "book_authors_pkey" PRIMARY KEY, btree (book_id, author_id)
+Foreign-key constraints:
+    "fk_ba_author" FOREIGN KEY (author_id) REFERENCES authors(author_id) ON UPDATE CASCADE ON DELETE CASCADE
+    "fk_ba_book" FOREIGN KEY (book_id) REFERENCES books(book_id) ON UPDATE CASCADE ON DELETE CASCADE
+
+
+database_labs=# \d loans
+                                           Table "public.loans"
+   Column    |            Type             | Collation | Nullable |                Default
+-------------+-----------------------------+-----------+----------+----------------------------------------
+ loan_id     | integer                     |           | not null | nextval('loans_loan_id_seq'::regclass)
+ member_id   | integer                     |           | not null |
+ book_id     | integer                     |           | not null |
+ borrowed_at | timestamp without time zone |           | not null | CURRENT_TIMESTAMP
+ due_date    | date                        |           | not null |
+ returned_at | timestamp without time zone |           |          |
+ late_fee    | numeric(10,2)               |           |          | 0
+Indexes:
+    "loans_pkey" PRIMARY KEY, btree (loan_id)
+Foreign-key constraints:
+    "fk_loans_book" FOREIGN KEY (book_id) REFERENCES books(book_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    "fk_loans_member" FOREIGN KEY (member_id) REFERENCES members(member_id) ON UPDATE CASCADE ON DELETE RESTRICT
+
+
+database_labs=# INSERT INTO authors (full_name) VALUES
+database_labs-# ('George Orwell'),
+database_labs-# ('Jane Austen');
+INSERT 0 2
+database_labs=# INSERT INTO books (isbn, title, published_year) VALUES
+database_labs-# ('9780451524935', '1984', 1949),
+database_labs-# ('9780141439518', 'Pride and Prejudice', 1813);
+INSERT 0 2
+database_labs=# INSERT INTO members (full_name, email) VALUES
+database_labs-# ('Alice Reader', 'alice.reader@example.com'),
+database_labs-# ('Bob Borrower', 'bob.borrower@example.com');
+INSERT 0 2
+database_labs=# INSERT INTO book_authors (book_id, author_id) VALUES
+database_labs-# (1, 1),
+database_labs-# (2, 2);
+INSERT 0 2
+database_labs=# INSERT INTO loans (member_id, book_id, due_date) VALUES
+database_labs-# (1, 1, CURRENT_DATE + INTERVAL '14 days'),
+database_labs-# (2, 2, CURRENT_DATE + INTERVAL '14 days');
+INSERT 0 2
+database_labs=# SELECT b.book_id, b.title, a.full_name AS author
+database_labs-# FROM books b
+database_labs-# JOIN book_authors ba USING (book_id)
+database_labs-# JOIN authors a USING (author_id)
+database_labs-# ORDER BY b.book_id, a.full_name;
+ book_id |        title        |    author
+---------+---------------------+---------------
+       1 | 1984                | George Orwell
+       2 | Pride and Prejudice | Jane Austen
+(2 rows)
+
+
+database_labs=# SELECT l.loan_id, m.full_name AS member, b.title AS book, l.borrowed_at, l.due_date
+database_labs-# FROM loans l
+database_labs-# JOIN members m USING (member_id)
+database_labs-# JOIN books   b USING (book_id)
+database_labs-# WHERE l.returned_at IS NULL
+database_labs-# ORDER BY l.loan_id;
+ loan_id |    member    |        book         |        borrowed_at         |  due_date
+---------+--------------+---------------------+----------------------------+------------
+       1 | Alice Reader | 1984                | 2025-10-16 09:31:39.491704 | 2025-10-30
+       2 | Bob Borrower | Pride and Prejudice | 2025-10-16 09:31:39.491704 | 2025-10-30
+(2 rows)
+
+
+database_labs=# \dt
+            List of relations
+ Schema |     Name     | Type  |  Owner
+--------+--------------+-------+----------
+ public | authors      | table | postgres
+ public | book_authors | table | postgres
+ public | books        | table | postgres
+ public | loans        | table | postgres
+ public | members      | table | postgres
+(5 rows)
+
+
+database_labs=# DROP TABLE authors;
+ERROR:  cannot drop table authors because other objects depend on it
+DETAIL:  constraint fk_ba_author on table book_authors depends on table authors
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+database_labs=# DROP TABLE authors CASCADE;
+NOTICE:  drop cascades to constraint fk_ba_author on table book_authors
+DROP TABLE
+database_labs=# DROP TABLE book_authors CASCADE;
+DROP TABLE
+database_labs=# DROP TABLE books CASCADE;
+NOTICE:  drop cascades to constraint fk_loans_book on table loans
+DROP TABLE
+database_labs=# DROP TABLE loans CASCADE;
+DROP TABLE
+database_labs=# DROP TABLE members CASCADE;
+DROP TABLE
+database_labs=# \dt
+Did not find any relations.
