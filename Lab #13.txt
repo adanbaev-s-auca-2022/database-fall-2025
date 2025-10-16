@@ -1,0 +1,379 @@
+// Aggregate functions
+
+database_labs=# CREATE TABLE employees (
+database_labs(#     employee_id SERIAL PRIMARY KEY,
+database_labs(#     first_name  VARCHAR(50),
+database_labs(#     department  VARCHAR(50),
+database_labs(#     salary      NUMERIC(10,2),
+database_labs(#     age         INT,
+database_labs(#     hire_date   DATE,
+database_labs(#     email       VARCHAR(100),
+database_labs(#     experience_years INT,
+database_labs(#     bonus       NUMERIC(10,2)
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE employee_skills (
+database_labs(#     id SERIAL PRIMARY KEY,
+database_labs(#     employee_id INT REFERENCES employees(employee_id),
+database_labs(#     skill_name VARCHAR(50)
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE sales_data (
+database_labs(#     id SERIAL PRIMARY KEY,
+database_labs(#     department VARCHAR(50),
+database_labs(#     sales_amount NUMERIC(10,2)
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE products (
+database_labs(#     product_id SERIAL PRIMARY KEY,
+database_labs(#     category VARCHAR(50),
+database_labs(#     product_name VARCHAR(100),
+database_labs(#     price NUMERIC(10,2)
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE product_reviews (
+database_labs(#     review_id SERIAL PRIMARY KEY,
+database_labs(#     product_id INT,
+database_labs(#     rating NUMERIC(3,1)
+database_labs(# );
+CREATE TABLE
+database_labs=# INSERT INTO employees (first_name, department, salary, age, hire_date, email, experience_years, bonus)
+database_labs-# VALUES
+database_labs-# ('Alice', 'HR',          55000, 29, '2021-03-15', 'alice@example.com', 3, 500),
+database_labs-# ('Bob',   'HR',          72000, 41, '2019-11-22', 'bob@example.com', 8, NULL),
+database_labs-# ('Carol', 'IT',          95000, 35, '2020-07-10', 'carol@example.com', 10, 1200),
+database_labs-# ('Dave',  'IT',         120000, 50, '2015-05-12', NULL, 20, 2000),
+database_labs-# ('Eve',   'Sales',       60000, 26, '2023-02-01', 'eve@example.com', 2, NULL),
+database_labs-# ('Frank', 'Sales',       58000, 28, '2022-01-25', 'frank@example.com', 3, 800);
+INSERT 0 6
+database_labs=# INSERT INTO employee_skills (employee_id, skill_name) VALUES
+database_labs-# (1, 'Excel'), (1, 'Communication'),
+database_labs-# (2, 'Recruiting'), (3, 'Python'), (3, 'SQL'),
+database_labs-# (4, 'Leadership'), (4, 'Project Management'),
+database_labs-# (5, 'Negotiation'), (6, 'CRM');
+INSERT 0 9
+database_labs=# INSERT INTO sales_data (department, sales_amount) VALUES
+database_labs-# ('HR', 5000), ('HR', 4500),
+database_labs-# ('IT', 8000), ('Sales', 12000), ('Sales', 10000);
+INSERT 0 5
+database_labs=# INSERT INTO products (category, product_name, price) VALUES
+database_labs-# ('Electronics', 'Phone', 700),
+database_labs-# ('Electronics', 'Laptop', 1200),
+database_labs-# ('Food', 'Chocolate', 5),
+database_labs-# ('Food', 'Coffee', 8);
+INSERT 0 4
+database_labs=# INSERT INTO product_reviews (product_id, rating) VALUES
+database_labs-# (1, 4.2), (1, 4.5), (2, 3.8), (2, 4.9),
+database_labs-# (3, 4.7), (3, 3.9), (4, 4.2), (4, 4.3);
+INSERT 0 8
+database_labs=# SELECT COUNT(*) AS total_employees FROM employees;
+ total_employees
+-----------------
+               6
+(1 row)
+
+
+database_labs=#
+database_labs=# SELECT COUNT(email) AS employees_with_email FROM employees;
+ employees_with_email
+----------------------
+                    5
+(1 row)
+
+
+database_labs=# SELECT COUNT(DISTINCT department) AS unique_departments FROM employees;
+ unique_departments
+--------------------
+                  3
+(1 row)
+
+
+database_labs=# SELECT SUM(salary) AS total_salaries FROM employees;
+ total_salaries
+----------------
+      460000.00
+(1 row)
+
+
+database_labs=# SELECT department, SUM(sales_amount) AS total_sales
+database_labs-# FROM sales_data
+database_labs-# GROUP BY department;
+ department | total_sales
+------------+-------------
+ Sales      |    22000.00
+ IT         |     8000.00
+ HR         |     9500.00
+(3 rows)
+
+
+database_labs=# SELECT AVG(salary) AS average_salary FROM employees;
+   average_salary
+--------------------
+ 76666.666666666667
+(1 row)
+
+
+database_labs=# SELECT department, AVG(age) AS avg_age
+database_labs-# FROM employees
+database_labs-# GROUP BY department;
+ department |       avg_age
+------------+---------------------
+ Sales      | 27.0000000000000000
+ IT         | 42.5000000000000000
+ HR         | 35.0000000000000000
+(3 rows)
+
+
+database_labs=# SELECT MAX(salary) AS highest_salary, MIN(salary) AS lowest_salary
+database_labs-# FROM employees;
+ highest_salary | lowest_salary
+----------------+---------------
+      120000.00 |      55000.00
+(1 row)
+
+
+database_labs=# SELECT department, MAX(hire_date) AS latest_hire
+database_labs-# FROM employees
+database_labs-# GROUP BY department;
+ department | latest_hire
+------------+-------------
+ Sales      | 2023-02-01
+ IT         | 2020-07-10
+ HR         | 2021-03-15
+(3 rows)
+
+
+database_labs=# SELECT department, STRING_AGG(first_name, ', ') AS employee_names
+database_labs-# FROM employees
+database_labs-# GROUP BY department;
+ department | employee_names
+------------+----------------
+ Sales      | Eve, Frank
+ IT         | Carol, Dave
+ HR         | Alice, Bob
+(3 rows)
+
+
+database_labs=# SELECT employee_id, STRING_AGG(skill_name, ', ' ORDER BY skill_name) AS skills
+database_labs-# FROM employee_skills
+database_labs-# GROUP BY employee_id;
+ employee_id |             skills
+-------------+--------------------------------
+           1 | Communication, Excel
+           2 | Recruiting
+           3 | Python, SQL
+           4 | Leadership, Project Management
+           5 | Negotiation
+           6 | CRM
+(6 rows)
+
+
+database_labs=# SELECT department, ARRAY_AGG(salary) AS salary_array
+database_labs-# FROM employees
+database_labs-# GROUP BY department;
+ department |     salary_array
+------------+----------------------
+ Sales      | {60000.00,58000.00}
+ IT         | {95000.00,120000.00}
+ HR         | {55000.00,72000.00}
+(3 rows)
+
+
+database_labs=# SELECT department, ARRAY_AGG(first_name ORDER BY first_name) AS employees
+database_labs-# FROM employees
+database_labs-# GROUP BY department;
+ department |  employees
+------------+--------------
+ HR         | {Alice,Bob}
+ IT         | {Carol,Dave}
+ Sales      | {Eve,Frank}
+(3 rows)
+
+
+database_labs=# SELECT department, STDDEV(salary) AS salary_std_dev, VARIANCE(salary) AS salary_variance
+database_labs-# FROM employees
+database_labs-# GROUP BY department;
+ department |   salary_std_dev   |    salary_variance
+------------+--------------------+------------------------
+ Sales      |  1414.213562373095 |   2000000.000000000000
+ IT         |     17677.66952966 |     312500000.00000000
+ HR         | 12020.815280171308 | 144500000.000000000000
+(3 rows)
+
+
+database_labs=# SELECT CORR(experience_years, salary) AS experience_salary_correlation
+database_labs-# FROM employees;
+ experience_salary_correlation
+-------------------------------
+            0.9735506270097891
+(1 row)
+
+
+database_labs=# SELECT category, COUNT(*) AS number_of_products,
+database_labs-#        SUM(price) AS total_value, AVG(price) AS average_price
+database_labs-# FROM products
+database_labs-# GROUP BY category;
+  category   | number_of_products | total_value |    average_price
+-------------+--------------------+-------------+----------------------
+ Electronics |                  2 |     1900.00 | 950.0000000000000000
+ Food        |                  2 |       13.00 |   6.5000000000000000
+(2 rows)
+
+
+database_labs=# SELECT EXTRACT(YEAR FROM hire_date) AS year,
+database_labs-#        EXTRACT(MONTH FROM hire_date) AS month,
+database_labs-#        COUNT(*) AS hires,
+database_labs-#        AVG(salary) AS avg_salary
+database_labs-# FROM employees
+database_labs-# GROUP BY EXTRACT(YEAR FROM hire_date), EXTRACT(MONTH FROM hire_date)
+database_labs-# ORDER BY year, month;
+ year | month | hires |     avg_salary
+------+-------+-------+---------------------
+ 2015 |     5 |     1 | 120000.000000000000
+ 2019 |    11 |     1 |  72000.000000000000
+ 2020 |     7 |     1 |  95000.000000000000
+ 2021 |     3 |     1 |  55000.000000000000
+ 2022 |     1 |     1 |  58000.000000000000
+ 2023 |     2 |     1 |  60000.000000000000
+(6 rows)
+
+
+database_labs=# SELECT
+database_labs-#   CASE
+database_labs-#     WHEN age < 30 THEN 'Under 30'
+database_labs-#     WHEN age BETWEEN 30 AND 50 THEN '30-50'
+database_labs-#     ELSE 'Over 50'
+database_labs-#   END AS age_group,
+database_labs-#   COUNT(*) AS employee_count,
+database_labs-#   AVG(salary) AS avg_salary
+database_labs-# FROM employees
+database_labs-# GROUP BY
+database_labs-#   CASE
+database_labs-#     WHEN age < 30 THEN 'Under 30'
+database_labs-#     WHEN age BETWEEN 30 AND 50 THEN '30-50'
+database_labs-#     ELSE 'Over 50'
+database_labs-#   END;
+ age_group | employee_count |     avg_salary
+-----------+----------------+--------------------
+ Under 30  |              3 | 57666.666666666667
+ 30-50     |              3 | 95666.666666666667
+(2 rows)
+
+
+database_labs=# SELECT department, COUNT(*) AS employee_count
+database_labs-# FROM employees
+database_labs-# GROUP BY department
+database_labs-# HAVING COUNT(*) > 1;
+ department | employee_count
+------------+----------------
+ Sales      |              2
+ IT         |              2
+ HR         |              2
+(3 rows)
+
+
+database_labs=# SELECT product_id, AVG(rating) AS avg_rating, COUNT(*) AS review_count
+database_labs-# FROM product_reviews
+database_labs-# GROUP BY product_id
+database_labs-# HAVING AVG(rating) > 4.0 AND COUNT(*) >= 2;
+ product_id |     avg_rating     | review_count
+------------+--------------------+--------------
+          3 | 4.3000000000000000 |            2
+          4 | 4.2500000000000000 |            2
+          2 | 4.3500000000000000 |            2
+          1 | 4.3500000000000000 |            2
+(4 rows)
+
+
+database_labs=# SELECT department, AVG(salary) AS dept_avg_salary
+database_labs-# FROM employees
+database_labs-# GROUP BY department;
+ department |   dept_avg_salary
+------------+---------------------
+ Sales      |  59000.000000000000
+ IT         | 107500.000000000000
+ HR         |  63500.000000000000
+(3 rows)
+
+
+database_labs=#
+database_labs=# SELECT employee_id, first_name, department, salary,
+database_labs-#        AVG(salary) OVER (PARTITION BY department) AS dept_avg_salary
+database_labs-# FROM employees;
+ employee_id | first_name | department |  salary   |   dept_avg_salary
+-------------+------------+------------+-----------+---------------------
+           1 | Alice      | HR         |  55000.00 |  63500.000000000000
+           2 | Bob        | HR         |  72000.00 |  63500.000000000000
+           3 | Carol      | IT         |  95000.00 | 107500.000000000000
+           4 | Dave       | IT         | 120000.00 | 107500.000000000000
+           5 | Eve        | Sales      |  60000.00 |  59000.000000000000
+           6 | Frank      | Sales      |  58000.00 |  59000.000000000000
+(6 rows)
+
+
+database_labs=# SELECT COUNT(*) AS total_rows,
+database_labs-#        COUNT(email) AS non_null_emails,
+database_labs-#        COUNT(*) - COUNT(email) AS null_emails
+database_labs-# FROM employees;
+ total_rows | non_null_emails | null_emails
+------------+-----------------+-------------
+          6 |               5 |           1
+(1 row)
+
+
+database_labs=# SELECT SUM(bonus) AS total_bonus,
+database_labs-#        AVG(bonus) AS avg_bonus,
+database_labs-#        COUNT(bonus) AS employees_with_bonus
+database_labs-# FROM employees;
+ total_bonus |       avg_bonus       | employees_with_bonus
+-------------+-----------------------+----------------------
+     4500.00 | 1125.0000000000000000 |                    4
+(1 row)
+
+
+database_labs=# SELECT department,
+database_labs-#        COUNT(*) AS employee_count,
+database_labs-#        MIN(salary) AS min_salary,
+database_labs-#        MAX(salary) AS max_salary,
+database_labs-#        AVG(salary) AS avg_salary,
+database_labs-#        STDDEV(salary) AS salary_std_dev
+database_labs-# FROM employees
+database_labs-# GROUP BY department
+database_labs-# ORDER BY avg_salary DESC;
+ department | employee_count | min_salary | max_salary |     avg_salary      |   salary_std_dev
+------------+----------------+------------+------------+---------------------+--------------------
+ IT         |              2 |   95000.00 |  120000.00 | 107500.000000000000 |     17677.66952966
+ HR         |              2 |   55000.00 |   72000.00 |  63500.000000000000 | 12020.815280171308
+ Sales      |              2 |   58000.00 |   60000.00 |  59000.000000000000 |  1414.213562373095
+(3 rows)
+
+
+database_labs=# SELECT department,
+database_labs-#        COUNT(*) AS total_employees,
+database_labs-#        COUNT(CASE WHEN salary > 50000 THEN 1 END) AS high_earners,
+database_labs-#        COUNT(CASE WHEN hire_date > '2023-01-01' THEN 1 END) AS recent_hires
+database_labs-# FROM employees
+database_labs-# GROUP BY department;
+ department | total_employees | high_earners | recent_hires
+------------+-----------------+--------------+--------------
+ Sales      |               2 |            2 |            1
+ IT         |               2 |            2 |            0
+ HR         |               2 |            2 |            0
+(3 rows)
+
+
+database_labs=# SELECT department,
+database_labs-#        COUNT(*) AS dept_count,
+database_labs-#        COUNT(*)::FLOAT / (SELECT COUNT(*) FROM employees) * 100 AS percentage
+database_labs-# FROM employees
+database_labs-# GROUP BY department
+database_labs-# ORDER BY percentage DESC;
+ department | dept_count |    percentage
+------------+------------+-------------------
+ Sales      |          2 | 33.33333333333333
+ IT         |          2 | 33.33333333333333
+ HR         |          2 | 33.33333333333333
+(3 rows)
+
+
+database_labs=#

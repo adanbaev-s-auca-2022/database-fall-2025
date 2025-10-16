@@ -1,0 +1,142 @@
+// Transactions and ACID properties
+
+database_labs=# CREATE TABLE customers (
+database_labs(#     customer_id SERIAL PRIMARY KEY,
+database_labs(#     name VARCHAR(100),
+database_labs(#     email VARCHAR(100)
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE accounts (
+database_labs(#     account_id SERIAL PRIMARY KEY,
+database_labs(#     holder_name VARCHAR(100),
+database_labs(#     balance DECIMAL(12,2)
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE orders (
+database_labs(#     order_id SERIAL PRIMARY KEY,
+database_labs(#     customer_id INT REFERENCES customers(customer_id),
+database_labs(#     total DECIMAL(10,2)
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE order_items (
+database_labs(#     order_item_id SERIAL PRIMARY KEY,
+database_labs(#     order_id INT REFERENCES orders(order_id),
+database_labs(#     product_id INT,
+database_labs(#     quantity INT
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE inventory (
+database_labs(#     product_id SERIAL PRIMARY KEY,
+database_labs(#     product_name VARCHAR(100),
+database_labs(#     stock INT
+database_labs(# );
+CREATE TABLE
+database_labs=# INSERT INTO customers (name, email)
+database_labs-# VALUES ('Alice', 'alice@email.com'),
+database_labs-#        ('Bob', 'bob@email.com');
+INSERT 0 2
+database_labs=# INSERT INTO accounts (holder_name, balance)
+database_labs-# VALUES ('Alice', 1000.00), ('Bob', 500.00);
+INSERT 0 2
+database_labs=# INSERT INTO inventory (product_name, stock)
+database_labs-# VALUES ('Laptop', 10), ('Mouse', 50);
+INSERT 0 2
+database_labs=# BEGIN;
+BEGIN
+database_labs=*# UPDATE accounts SET balance = balance - 100 WHERE account_id = 1;
+UPDATE 1
+database_labs=*# UPDATE accounts SET balance = balance + 100 WHERE account_id = 2;
+UPDATE 1
+database_labs=*# COMMIT;
+COMMIT
+database_labs=# BEGIN;
+BEGIN
+database_labs=*# UPDATE accounts SET balance = balance - 200 WHERE account_id = 1;
+UPDATE 1
+database_labs=*# UPDATE accounts SET balance = balance + 200 WHERE account_id = 2;
+UPDATE 1
+database_labs=*# ROLLBACK;
+ROLLBACK
+database_labs=# BEGIN;
+BEGIN
+database_labs=*# INSERT INTO orders (customer_id, total) VALUES (1, 250.00);
+INSERT 0 1
+database_labs=*# INSERT INTO order_items (order_id, product_id, quantity)
+database_labs-*# VALUES (currval('orders_order_id_seq'), 1, 2);
+INSERT 0 1
+database_labs=*# UPDATE inventory SET stock = stock - 2 WHERE product_id = 1;
+UPDATE 1
+database_labs=*# COMMIT;
+COMMIT
+database_labs=# BEGIN;
+BEGIN
+database_labs=*# INSERT INTO customers (name, email) VALUES ('Charlie', 'charlie@email.com');
+INSERT 0 1
+database_labs=*# SAVEPOINT after_customer;
+SAVEPOINT
+database_labs=*# INSERT INTO orders (customer_id, total) VALUES (currval('customers_customer_id_seq'), 500.00);
+INSERT 0 1
+database_labs=*# ROLLBACK TO SAVEPOINT after_customer;
+ROLLBACK
+database_labs=*# COMMIT;
+COMMIT
+database_labs=# BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+BEGIN
+database_labs=*# SELECT * FROM accounts WHERE balance >= 0;
+ account_id | holder_name | balance
+------------+-------------+---------
+          1 | Alice       |  900.00
+          2 | Bob         |  600.00
+(2 rows)
+
+
+database_labs=*# COMMIT;
+COMMIT
+database_labs=# BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+BEGIN
+database_labs=*# SELECT * FROM accounts WHERE balance >= 0;
+ account_id | holder_name | balance
+------------+-------------+---------
+          1 | Alice       |  900.00
+          2 | Bob         |  600.00
+(2 rows)
+
+
+database_labs=*# -- (Run another UPDATE in a separate session if you want to observe behavior)
+database_labs=*# SELECT * FROM accounts WHERE balance >= 0;
+ account_id | holder_name | balance
+------------+-------------+---------
+          1 | Alice       |  900.00
+          2 | Bob         |  600.00
+(2 rows)
+
+
+database_labs=*# COMMIT;
+COMMIT
+database_labs=# BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+BEGIN
+database_labs=*# SELECT * FROM accounts;
+ account_id | holder_name | balance
+------------+-------------+---------
+          1 | Alice       |  900.00
+          2 | Bob         |  600.00
+(2 rows)
+
+
+database_labs=*# UPDATE accounts SET balance = balance * 1.01; -- 1% interest
+UPDATE 2
+database_labs=*# COMMIT;
+COMMIT
+database_labs=# BEGIN;
+BEGIN
+database_labs=*# INSERT INTO customers (name, email) VALUES ('Delta', 'delta@email.com');
+INSERT 0 1
+database_labs=*# SAVEPOINT sp_demo;
+SAVEPOINT
+database_labs=*# INSERT INTO orders (customer_id, total) VALUES (currval('customers_customer_id_seq'), 123.45);
+INSERT 0 1
+database_labs=*# -- All good? finalize the savepoint
+database_labs=*# RELEASE SAVEPOINT sp_demo;
+RELEASE
+database_labs=*# COMMIT;
+COMMIT

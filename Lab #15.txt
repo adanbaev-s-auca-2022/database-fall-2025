@@ -1,0 +1,268 @@
+// Advanced Querying
+
+database_labs=# CREATE TABLE employees (
+database_labs(#     employee_id SERIAL PRIMARY KEY,
+database_labs(#     first_name VARCHAR(50),
+database_labs(#     last_name  VARCHAR(50),
+database_labs(#     department VARCHAR(50),
+database_labs(#     manager_id INT,
+database_labs(#     salary NUMERIC(10,2),
+database_labs(#     tenure INT
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE orders (
+database_labs(#     order_id SERIAL PRIMARY KEY,
+database_labs(#     region_id INT,
+database_labs(#     product_name VARCHAR(100),
+database_labs(#     amount NUMERIC(10,2),
+database_labs(#     order_date DATE,
+database_labs(#     status VARCHAR(30)
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE sales (
+database_labs(#     sale_id SERIAL PRIMARY KEY,
+database_labs(#     product_name VARCHAR(100),
+database_labs(#     year INT,
+database_labs(#     sales_amount NUMERIC(10,2)
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE warehouse_1 (
+database_labs(#     product_id SERIAL PRIMARY KEY,
+database_labs(#     product_name VARCHAR(100),
+database_labs(#     quantity INT
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE warehouse_2 (
+database_labs(#     product_id SERIAL PRIMARY KEY,
+database_labs(#     product_name VARCHAR(100),
+database_labs(#     quantity INT
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE pivoted_sales (
+database_labs(#     product_name VARCHAR(100),
+database_labs(#     year_2022 NUMERIC(10,2),
+database_labs(#     year_2023 NUMERIC(10,2),
+database_labs(#     year_2024 NUMERIC(10,2)
+database_labs(# );
+CREATE TABLE
+database_labs=# INSERT INTO employees (first_name, last_name, department, manager_id, salary, tenure) VALUES
+database_labs-# ('Alice','Brown','HR',NULL,55000,4),
+database_labs-# ('Bob','Miller','HR',1,70000,6),
+database_labs-# ('Carol','Jones','IT',NULL,90000,8),
+database_labs-# ('Dave','Smith','IT',3,120000,10),
+database_labs-# ('Eve','Johnson','Sales',NULL,60000,3);
+INSERT 0 5
+database_labs=# INSERT INTO orders (region_id, product_name, amount, order_date, status) VALUES
+database_labs-# (1,'Laptop',1200,'2024-01-15','High Priority'),
+database_labs-# (1,'Phone',700,'2024-03-20','Medium Priority'),
+database_labs-# (2,'Tablet',500,'2024-05-10','Low Priority'),
+database_labs-# (2,'Monitor',400,'2024-06-01','High Priority');
+INSERT 0 4
+database_labs=# INSERT INTO sales (product_name, year, sales_amount) VALUES
+database_labs-# ('Laptop',2022,30000),('Laptop',2023,40000),('Laptop',2024,45000),
+database_labs-# ('Phone',2022,25000),('Phone',2023,27000),('Phone',2024,30000),
+database_labs-# ('Tablet',2022,10000),('Tablet',2023,15000),('Tablet',2024,18000);
+INSERT 0 9
+database_labs=#
+database_labs=# INSERT INTO warehouse_1 (product_name, quantity) VALUES
+database_labs-# ('Laptop',5),('Phone',10),('Tablet',0);
+INSERT 0 3
+database_labs=# INSERT INTO warehouse_2 (product_name, quantity) VALUES
+database_labs-# ('Laptop',3),('Phone',0),('Tablet',0),('Mouse',8);
+INSERT 0 4
+database_labs=# INSERT INTO pivoted_sales VALUES
+database_labs-# ('Laptop',30000,40000,45000),
+database_labs-# ('Phone',25000,27000,30000),
+database_labs-# ('Tablet',10000,15000,18000);
+INSERT 0 3
+database_labs=#
+database_labs=# SELECT first_name, last_name, salary
+database_labs-# FROM employees
+database_labs-# WHERE salary > (
+database_labs(#   SELECT AVG(salary) FROM employees
+database_labs(# );
+ first_name | last_name |  salary
+------------+-----------+-----------
+ Carol      | Jones     |  90000.00
+ Dave       | Smith     | 120000.00
+(2 rows)
+
+
+database_labs=# WITH regional_sales AS (
+database_labs(#   SELECT region_id, SUM(amount) AS total_sales
+database_labs(#   FROM orders
+database_labs(#   GROUP BY region_id
+database_labs(# )
+database_labs-# SELECT region_id, total_sales
+database_labs-# FROM regional_sales
+database_labs-# WHERE total_sales > 1000;
+ region_id | total_sales
+-----------+-------------
+         1 |     1900.00
+(1 row)
+
+
+database_labs=# WITH RECURSIVE org_chart AS (
+database_labs(#   SELECT employee_id, first_name, last_name, manager_id
+database_labs(#   FROM employees
+database_labs(#   WHERE manager_id IS NULL
+database_labs(#   UNION ALL
+database_labs(#   SELECT e.employee_id, e.first_name, e.last_name, e.manager_id
+database_labs(#   FROM employees e
+database_labs(#   INNER JOIN org_chart oc ON e.manager_id = oc.employee_id
+database_labs(# )
+database_labs-# SELECT * FROM org_chart;
+ employee_id | first_name | last_name | manager_id
+-------------+------------+-----------+------------
+           1 | Alice      | Brown     |
+           3 | Carol      | Jones     |
+           5 | Eve        | Johnson   |
+           2 | Bob        | Miller    |          1
+           4 | Dave       | Smith     |          3
+(5 rows)
+
+
+database_labs=# SELECT product_name FROM warehouse_1
+database_labs-# UNION
+database_labs-# SELECT product_name FROM warehouse_2;
+ product_name
+--------------
+ Mouse
+ Tablet
+ Laptop
+ Phone
+(4 rows)
+
+
+database_labs=# SELECT product_id FROM warehouse_1 WHERE quantity = 0
+database_labs-# INTERSECT
+database_labs-# SELECT product_id FROM warehouse_2 WHERE quantity = 0;
+ product_id
+------------
+          3
+(1 row)
+
+
+database_labs=# SELECT product_name FROM warehouse_1
+database_labs-# EXCEPT
+database_labs-# SELECT product_name FROM warehouse_2;
+ product_name
+--------------
+(0 rows)
+
+
+database_labs=# SELECT
+database_labs-#   first_name,
+database_labs-#   last_name,
+database_labs-#   department,
+database_labs-#   salary,
+database_labs-#   RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS dept_salary_rank
+database_labs-# FROM employees;
+ first_name | last_name | department |  salary   | dept_salary_rank
+------------+-----------+------------+-----------+------------------
+ Bob        | Miller    | HR         |  70000.00 |                1
+ Alice      | Brown     | HR         |  55000.00 |                2
+ Dave       | Smith     | IT         | 120000.00 |                1
+ Carol      | Jones     | IT         |  90000.00 |                2
+ Eve        | Johnson   | Sales      |  60000.00 |                1
+(5 rows)
+
+
+database_labs=# SELECT
+database_labs-#   product_name,
+database_labs-#   SUM(CASE WHEN year = 2022 THEN sales_amount ELSE 0 END) AS year_2022,
+database_labs-#   SUM(CASE WHEN year = 2023 THEN sales_amount ELSE 0 END) AS year_2023,
+database_labs-#   SUM(CASE WHEN year = 2024 THEN sales_amount ELSE 0 END) AS year_2024
+database_labs-# FROM sales
+database_labs-# GROUP BY product_name;
+ product_name | year_2022 | year_2023 | year_2024
+--------------+-----------+-----------+-----------
+ Tablet       |  10000.00 |  15000.00 |  18000.00
+ Phone        |  25000.00 |  27000.00 |  30000.00
+ Laptop       |  30000.00 |  40000.00 |  45000.00
+(3 rows)
+
+
+database_labs=# SELECT product_name, '2022' AS year, year_2022 AS sales_amount FROM pivoted_sales
+database_labs-# UNION ALL
+database_labs-# SELECT product_name, '2023' AS year, year_2023 AS sales_amount FROM pivoted_sales
+database_labs-# UNION ALL
+database_labs-# SELECT product_name, '2024' AS year, year_2024 AS sales_amount FROM pivoted_sales
+database_labs-# ORDER BY product_name, year;
+ product_name | year | sales_amount
+--------------+------+--------------
+ Laptop       | 2022 |     30000.00
+ Laptop       | 2023 |     40000.00
+ Laptop       | 2024 |     45000.00
+ Phone        | 2022 |     25000.00
+ Phone        | 2023 |     27000.00
+ Phone        | 2024 |     30000.00
+ Tablet       | 2022 |     10000.00
+ Tablet       | 2023 |     15000.00
+ Tablet       | 2024 |     18000.00
+(9 rows)
+
+
+database_labs=# SELECT
+database_labs-#   employee_id,
+database_labs-#   SUM(salary) OVER (PARTITION BY department) AS total_dept_salary,
+database_labs-#   AVG(salary) FILTER (WHERE tenure > 5) OVER () AS avg_salary_senior
+database_labs-# FROM employees;
+ employee_id | total_dept_salary | avg_salary_senior
+-------------+-------------------+--------------------
+           1 |         125000.00 | 93333.333333333333
+           2 |         125000.00 | 93333.333333333333
+           3 |         210000.00 | 93333.333333333333
+           4 |         210000.00 | 93333.333333333333
+           5 |          60000.00 | 93333.333333333333
+(5 rows)
+
+
+database_labs=# SELECT product_name, status
+database_labs-# FROM orders
+database_labs-# ORDER BY
+database_labs-#   CASE status
+database_labs-#     WHEN 'High Priority' THEN 1
+database_labs-#     WHEN 'Medium Priority' THEN 2
+database_labs-#     WHEN 'Low Priority' THEN 3
+database_labs-#     ELSE 4
+database_labs-#   END;
+ product_name |     status
+--------------+-----------------
+ Laptop       | High Priority
+ Monitor      | High Priority
+ Phone        | Medium Priority
+ Tablet       | Low Priority
+(4 rows)
+
+
+database_labs=# EXPLAIN ANALYZE
+database_labs-# SELECT first_name, salary FROM employees WHERE salary > 70000;
+                                              QUERY PLAN
+-------------------------------------------------------------------------------------------------------
+ Seq Scan on employees  (cost=0.00..12.38 rows=63 width=134) (actual time=0.012..0.013 rows=2 loops=1)
+   Filter: (salary > '70000'::numeric)
+   Rows Removed by Filter: 3
+ Planning Time: 0.062 ms
+ Execution Time: 0.022 ms
+(5 rows)
+
+
+database_labs=# CREATE INDEX idx_employees_department ON employees(department);
+CREATE INDEX
+database_labs=# CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX
+database_labs=# \dt
+             List of relations
+ Schema |     Name      | Type  |  Owner
+--------+---------------+-------+----------
+ public | employees     | table | postgres
+ public | orders        | table | postgres
+ public | pivoted_sales | table | postgres
+ public | sales         | table | postgres
+ public | warehouse_1   | table | postgres
+ public | warehouse_2   | table | postgres
+(6 rows)
+
+
+database_labs=#
