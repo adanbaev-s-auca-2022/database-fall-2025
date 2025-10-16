@@ -1,0 +1,246 @@
+// Querying Data
+
+database_labs=# CREATE TABLE employees (
+database_labs(#     id           SERIAL PRIMARY KEY,
+database_labs(#     name         VARCHAR(100) NOT NULL,
+database_labs(#     department   VARCHAR(100) NOT NULL,
+database_labs(#     department_id INT,
+database_labs(#     salary       NUMERIC(12,2) NOT NULL
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE products (
+database_labs(#     product_id   SERIAL PRIMARY KEY,
+database_labs(#     product_name VARCHAR(200) NOT NULL,
+database_labs(#     price        NUMERIC(12,2) NOT NULL
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE customers (
+database_labs(#     customer_id   SERIAL PRIMARY KEY,
+database_labs(#     customer_name VARCHAR(200) NOT NULL
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE users (
+database_labs(#     user_id SERIAL PRIMARY KEY,
+database_labs(#     email   VARCHAR(255) NOT NULL
+database_labs(# );
+CREATE TABLE
+database_labs=# CREATE TABLE sales (
+database_labs(#     sale_id      SERIAL PRIMARY KEY,
+database_labs(#     employee_id  INT NOT NULL REFERENCES employees(id),
+database_labs(#     amount       NUMERIC(12,2) NOT NULL
+database_labs(# );
+CREATE TABLE
+database_labs=# INSERT INTO employees (name, department, department_id, salary) VALUES
+database_labs-# ('Alice',  'Sales',       3,  70000),
+database_labs-# ('Bob',    'Engineering', 5, 120000),
+database_labs-# ('Carol',  'Engineering', 7,  80000),
+database_labs-# ('Dave',   'Marketing',   2,  60000);
+INSERT 0 4
+database_labs=# INSERT INTO products (product_name, price) VALUES
+database_labs-# ('Strawberry', 30),
+database_labs-# ('Blueberry',  25),
+database_labs-# ('Banana',     10),
+database_labs-# ('Gadget',   1999);
+INSERT 0 4
+database_labs=# INSERT INTO customers (customer_name) VALUES
+database_labs-# ('Brad'),
+database_labs-# ('Brandon'),
+database_labs-# ('Brian'),
+database_labs-# ('Alice Cooper');
+INSERT 0 4
+database_labs=# INSERT INTO users (email) VALUES
+database_labs-# ('test.user@gmail.com'),
+database_labs-# ('someone@GMAIL.com'),
+database_labs-# ('admin@yahoo.com');
+INSERT 0 3
+database_labs=#
+database_labs=# INSERT INTO sales (employee_id, amount) VALUES
+database_labs-# (1, 1500),
+database_labs-# (2, 2500),
+database_labs-# (3,  900),
+database_labs-# (2, 1200);
+INSERT 0 4
+database_labs=# SELECT * FROM employees;
+ id | name  | department  | department_id |  salary
+----+-------+-------------+---------------+-----------
+  1 | Alice | Sales       |             3 |  70000.00
+  2 | Bob   | Engineering |             5 | 120000.00
+  3 | Carol | Engineering |             7 |  80000.00
+  4 | Dave  | Marketing   |             2 |  60000.00
+(4 rows)
+
+
+database_labs=# SELECT name, department FROM employees;
+ name  | department
+-------+-------------
+ Alice | Sales
+ Bob   | Engineering
+ Carol | Engineering
+ Dave  | Marketing
+(4 rows)
+
+
+database_labs=# SELECT name, salary, salary * 0.10 AS potential_bonus
+database_labs-# FROM employees;
+ name  |  salary   | potential_bonus
+-------+-----------+-----------------
+ Alice |  70000.00 |       7000.0000
+ Bob   | 120000.00 |      12000.0000
+ Carol |  80000.00 |       8000.0000
+ Dave  |  60000.00 |       6000.0000
+(4 rows)
+
+
+database_labs=# SELECT name, salary
+database_labs-# FROM employees
+database_labs-# WHERE department = 'Sales';
+ name  |  salary
+-------+----------
+ Alice | 70000.00
+(1 row)
+
+
+database_labs=# SELECT name
+database_labs-# FROM employees
+database_labs-# WHERE salary > 75000 AND department = 'Engineering';
+ name
+-------
+ Bob
+ Carol
+(2 rows)
+
+
+database_labs=# SELECT product_name, price
+database_labs-# FROM products
+database_labs-# WHERE price BETWEEN 20 AND 50;
+ product_name | price
+--------------+-------
+ Strawberry   | 30.00
+ Blueberry    | 25.00
+(2 rows)
+
+
+database_labs=# SELECT customer_name
+database_labs-# FROM customers
+database_labs-# WHERE customer_name LIKE 'Bra%';
+ customer_name
+---------------
+ Brad
+ Brandon
+(2 rows)
+
+
+database_labs=# SELECT product_name
+database_labs-# FROM products
+database_labs-# WHERE product_name LIKE '%berry';
+ product_name
+--------------
+ Strawberry
+ Blueberry
+(2 rows)
+
+
+database_labs=# SELECT email
+database_labs-# FROM users
+database_labs-# WHERE email ILIKE '%@gmail.com';
+        email
+---------------------
+ test.user@gmail.com
+ someone@GMAIL.com
+(2 rows)
+
+
+database_labs=# SELECT name
+database_labs-# FROM employees
+database_labs-# WHERE name ~ '^[AB]';
+ name
+-------
+ Alice
+ Bob
+(2 rows)
+
+
+database_labs=# SELECT email
+database_labs-# FROM users
+database_labs-# WHERE email ~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$';
+        email
+---------------------
+ test.user@gmail.com
+ someone@GMAIL.com
+ admin@yahoo.com
+(3 rows)
+
+
+database_labs=# SELECT name, department
+database_labs-# FROM employees
+database_labs-# WHERE department_id IN (3, 5, 7);
+ name  | department
+-------+-------------
+ Alice | Sales
+ Bob   | Engineering
+ Carol | Engineering
+(3 rows)
+
+
+database_labs=# SELECT name
+database_labs-# FROM employees
+database_labs-# WHERE id IN (SELECT employee_id FROM sales WHERE amount > 1000);
+ name
+-------
+ Alice
+ Bob
+(2 rows)
+
+
+database_labs=# SELECT name
+database_labs-# FROM employees e
+database_labs-# WHERE EXISTS (
+database_labs(#   SELECT 1
+database_labs(#   FROM sales s
+database_labs(#   WHERE s.employee_id = e.id AND s.amount > 1000
+database_labs(# );
+ name
+-------
+ Alice
+ Bob
+(2 rows)
+
+
+database_labs=# SELECT name, salary,
+database_labs-#   CASE
+database_labs-#     WHEN salary > 100000 THEN 'Senior'
+database_labs-#     WHEN salary BETWEEN 60000 AND 100000 THEN 'Mid-Level'
+database_labs-#     ELSE 'Junior'
+database_labs-#   END AS employee_level
+database_labs-# FROM employees;
+ name  |  salary   | employee_level
+-------+-----------+----------------
+ Alice |  70000.00 | Mid-Level
+ Bob   | 120000.00 | Senior
+ Carol |  80000.00 | Mid-Level
+ Dave  |  60000.00 | Mid-Level
+(4 rows)
+
+
+database_labs=# WITH department_averages AS (
+database_labs(#   SELECT
+database_labs(#     department,
+database_labs(#     AVG(salary) AS avg_salary
+database_labs(#   FROM employees
+database_labs(#   GROUP BY department
+database_labs(# )
+database_labs-# SELECT
+database_labs-#   e.name,
+database_labs-#   e.salary,
+database_labs-#   e.department,
+database_labs-#   da.avg_salary
+database_labs-# FROM employees e
+database_labs-# JOIN department_averages da ON e.department = da.department
+database_labs-# WHERE e.salary > da.avg_salary;
+ name |  salary   | department  |     avg_salary
+------+-----------+-------------+---------------------
+ Bob  | 120000.00 | Engineering | 100000.000000000000
+(1 row)
+
+
+database_labs=#
